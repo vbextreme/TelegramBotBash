@@ -32,10 +32,12 @@ function special_command(){
 	get_chat_member ${CHAT[ID]} ${USER[ID]}
 	
 	if [[ ${CHATMEMBER[OK]} != "true" ]]; then
+		echo "fail ok"
 		return 1
 	fi
 	
 	if [[ ${CHATMEMBER[STATUS]} != creator && ${CHATMEMBER[STATUS]} != administrator ]]; then
+		echo "fail status"
 		return 2
 	fi
 	
@@ -110,6 +112,9 @@ function chan_command(){
 			;;
 		esac
 	fi
+	
+	return 0
+}
 	
 if [[ ${MESSAGE:0:1} == "$"  ]]; then
 	special_command
