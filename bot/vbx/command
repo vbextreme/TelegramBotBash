@@ -76,16 +76,24 @@ elif [[ ${MESSAGE:0:1} == "/" ]]; then
 					send_normal_message "${CHAT[ID]}" "$ kick $MESSAGE[FROM_USERNAME]"
 				;;
 				
-				'/part')
-					kick_chat_member "${CHAT[ID]}" "${USER[ID]}"
-					unban_chat_member "${CHAT[ID]}" "${USER[ID]}"
-					send_normal_message "${CHAT[ID]}" "$ part $USER[USERNAME]"
-				;;
-				
 				*)
 					log "warning" "unavailable / command '$MESSAGE'"
 				;;
 			esac
 		fi
+	else
+		CMD=$(echo $MESSAGE | cut -f1 -d\  )
+	
+		case $CMD in		
+			'/part')
+				kick_chat_member "${CHAT[ID]}" "${USER[ID]}"
+				unban_chat_member "${CHAT[ID]}" "${USER[ID]}"
+				send_normal_message "${CHAT[ID]}" "$ part $USER[USERNAME]"
+			;;
+				
+			*)
+				log "warning" "unavailable / command '$MESSAGE'"
+			;;
+		esac
 	fi
 fi
