@@ -101,10 +101,10 @@ function chan_command(){
 		esac
 	else
 		case $CMD in
-			'/part'|'/suicide')
-				kick_chat_member "${CHAT[ID]}" "${MESSAGE[FROM_ID]}"
-				unban_chat_member "${CHAT[ID]}" "${MESSAGE[FROM_ID]}"
-				send_normal_message "${CHAT[ID]}" "\$ kick ${MESSAGE[FROM_USERNAME]}"
+			'/part'|'/suicide'|'/suicidegirls')
+				kick_chat_member "${CHAT[ID]}" "${USER[ID]}"
+				unban_chat_member "${CHAT[ID]}" "${USER[ID]}"
+				send_normal_message "${CHAT[ID]}" "\$ kick ${USER[USERNAME]}"
 			;;
 				
 			*)
