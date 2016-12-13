@@ -42,7 +42,6 @@ if [[ ${MESSAGE:0:1} == "$"  ]]; then
 				
 				'update')
 					send_normal_message ${CHAT[ID]} "$ start update ..."
-					local PH=$PWD
 					cd ..
 					git pull > /dev/null
 					cd ./core
