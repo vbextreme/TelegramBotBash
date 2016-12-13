@@ -28,76 +28,81 @@ function log(){
 	echo "[$dt ++ ${CHAT[USERNAME]} ++ ${USER[USERNAME]} ++ ${USER[ID]}] $1: $2" >> $FILE_LOG
 }	
 
-#command start with $
-if [[ ${MESSAGE:0:1} == "$"  ]]; then
+function special_command(){
 	get_chat_member ${CHAT[ID]} ${USER[ID]}
-	if [[ ${CHATMEMBER[OK]} == "true" ]]; then
-		if [[ ${CHATMEMBER[STATUS]} == creator || ${CHATMEMBER[STATUS]} == administrator ]]; then
-			CMD=$(echo $MESSAGE | cut -f2 -d\  )
-						
-			case $CMD in
-				'ping')
-					send_normal_message ${CHAT[ID]} "pong"
-				;;
-				
-				'update')
-					send_normal_message ${CHAT[ID]} "$ start update ..."
-					cd ..
-					git pull > /dev/null
-					cd ./core
-					send_normal_message ${CHAT[ID]} "$ update complete"
-					nohup ./bashbot.sh -b "$BOT_NAME" &
-					send_normal_message ${CHAT[ID]} "$ reboot"
-					kill $CORE_PID
-					exit 0
-				;;
-				
-				'log')
-					local RP=$(cat $FILE_LOG)
-					send_normal_message "${CHAT[ID]}" "$RP"
-				;;
-				
-				*)
-					log "warning" "unavailable $ command '$MESSAGE'"
-				;;
-			esac
-		fi
+	
+	if [[ ${CHATMEMBER[OK]} != "true" ]]; then
+		return 1
 	fi
-#command start with /
-elif [[ ${MESSAGE:0:1} == "/" ]]; then
+	
+	if [[ ${CHATMEMBER[STATUS]} != creator && ${CHATMEMBER[STATUS]} != administrator ]]; then
+		return 2
+	fi
+	
+	CMD=$(echo $MESSAGE | cut -f2 -d\  )
+	
+	case $CMD in
+		'ping')
+			send_normal_message ${CHAT[ID]} "pong"
+		;;		
+		'update')
+			send_normal_message ${CHAT[ID]} "$ start update ..."
+			cd ..
+			git pull > /dev/null
+			cd ./core
+			send_normal_message ${CHAT[ID]} "$ update complete"
+			nohup ./bashbot.sh -b "$BOT_NAME" &
+			send_normal_message ${CHAT[ID]} "$ reboot"
+			kill $CORE_PID
+			exit 0
+		;;
+		'log')
+			local RP=$(cat $FILE_LOG)
+			send_normal_message "${CHAT[ID]}" "$RP"
+		;;		
+		*)
+			log "warning" "unavailable $ command '$MESSAGE'"
+		;;
+	esac
+	
+	return 0
+}
+
+function chan_command(){
 	get_chat_member ${CHAT[ID]} ${USER[ID]}
-	if [[ ${CHATMEMBER[OK]} == "true" ]]; then
-		if [[ ${CHATMEMBER[STATUS]} == creator || ${CHATMEMBER[STATUS]} == administrator ]]; then
-			CMD=$(echo $MESSAGE | cut -f1 -d\  )
 	
-			case $CMD in
-				'/start')
-				;;
+	if [[ ${CHATMEMBER[OK]} != "true" ]]; then
+		return 1
+	fi
+	
+	CMD=$(echo $MESSAGE | cut -f1 -d\  )
+	
+	if [[ ${CHATMEMBER[STATUS]} == creator || ${CHATMEMBER[STATUS]} == administrator ]]; then
+		case $CMD in
+			'/start')
+			;;
 				
-				'/ban')
-					kick_chat_member "${CHAT[ID]}" "${MESSAGE[FROM_ID]}"
-					send_normal_message "${CHAT[ID]}" "$ ban $MESSAGE[FROM_USERNAME]"
-				;;
+			'/ban')
+				kick_chat_member "${CHAT[ID]}" "${MESSAGE[FROM_ID]}"
+				send_normal_message "${CHAT[ID]}" "$ ban $MESSAGE[FROM_USERNAME]"
+			;;
 				
-				'/kick')
-					kick_chat_member "${CHAT[ID]}" "${MESSAGE[FROM_ID]}"
-					unban_chat_member "${CHAT[ID]}" "${MESSAGE[FROM_ID]}"
-					send_normal_message "${CHAT[ID]}" "\$ kick ${MESSAGE[FROM_USERNAME]}"
-				;;
+			'/kick')
+				kick_chat_member "${CHAT[ID]}" "${MESSAGE[FROM_ID]}"
+				unban_chat_member "${CHAT[ID]}" "${MESSAGE[FROM_ID]}"
+				send_normal_message "${CHAT[ID]}" "\$ kick ${MESSAGE[FROM_USERNAME]}"
+			;;
 				
-				*)
-					log "warning" "unavailable / command '$MESSAGE'"
-				;;
-			esac
-		fi
+			*)
+				log "warning" "unavailable / command '$MESSAGE'"
+			;;
+		esac
 	else
-		CMD=$(echo $MESSAGE | cut -f1 -d\  )
-	
-		case $CMD in		
-			'/part')
-				kick_chat_member "${CHAT[ID]}" "${USER[ID]}"
-				unban_chat_member "${CHAT[ID]}" "${USER[ID]}"
-				send_normal_message "${CHAT[ID]}" "\$ part ${USER[USERNAME]}"
+		case $CMD in
+			'/part'|'/suicide')
+				kick_chat_member "${CHAT[ID]}" "${MESSAGE[FROM_ID]}"
+				unban_chat_member "${CHAT[ID]}" "${MESSAGE[FROM_ID]}"
+				send_normal_message "${CHAT[ID]}" "\$ kick ${MESSAGE[FROM_USERNAME]}"
 			;;
 				
 			*)
@@ -105,4 +110,9 @@ elif [[ ${MESSAGE:0:1} == "/" ]]; then
 			;;
 		esac
 	fi
+	
+if [[ ${MESSAGE:0:1} == "$"  ]]; then
+	special_command
+elif [[ ${MESSAGE:0:1} == "/" ]]; then
+	chan_command
 fi
