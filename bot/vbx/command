@@ -53,6 +53,11 @@ if [[ ${MESSAGE:0:1} == "$"  ]]; then
 					exit 0
 				;;
 				
+				'log')
+					local RP=$(cat $FILE_LOG)
+					send_normal_message "${CHAT[ID]}" "$RP"
+				;;
+				
 				*)
 					log "warning" "unavailable $ command '$MESSAGE'"
 				;;
