@@ -89,7 +89,7 @@ elif [[ ${MESSAGE:0:1} == "/" ]]; then
 			'/part')
 				kick_chat_member "${CHAT[ID]}" "${USER[ID]}"
 				unban_chat_member "${CHAT[ID]}" "${USER[ID]}"
-				send_normal_message "${CHAT[ID]}" "$ part $USER[USERNAME]"
+				send_normal_message "${CHAT[ID]}" "$ part ${USER[USERNAME]}"
 			;;
 				
 			*)
