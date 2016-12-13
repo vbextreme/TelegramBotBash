@@ -61,6 +61,7 @@ if [[ ${MESSAGE:0:1} == "$"  ]]; then
 	fi
 #command start with /
 elif [[ ${MESSAGE:0:1} == "/" ]]; then
+	get_chat_member ${CHAT[ID]} ${USER[ID]}
 	if [[ ${CHATMEMBER[OK]} == "true" ]]; then
 		if [[ ${CHATMEMBER[STATUS]} == creator || ${CHATMEMBER[STATUS]} == administrator ]]; then
 			CMD=$(echo $MESSAGE | cut -f1 -d\  )
