@@ -44,8 +44,8 @@ if [[ ${MESSAGE:0:1} == "$"  ]]; then
 					send_normal_message ${CHAT[ID]} "$ start update ..."
 					local PH=$PWD
 					cd ..
-					cd ..
 					git pull > /dev/null
+					cd ./core
 					send_normal_message ${CHAT[ID]} "$ update complete"
 					nohup ./bashbot.sh -b "$BOT_NAME" &
 					send_normal_message ${CHAT[ID]} "$ reboot"
