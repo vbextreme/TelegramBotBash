@@ -34,7 +34,7 @@ if [[ ${MESSAGE:0:1} == "$"  ]]; then
 	if [[ ${CHATMEMBER[OK]} == "true" ]]; then
 		if [[ ${CHATMEMBER[STATUS]} == creator || ${CHATMEMBER[STATUS]} == administrator ]]; then
 			CMD=$(echo $MESSAGE | cut -f2 -d\  )
-	
+						
 			case $CMD in
 				'ping')
 					send_normal_message ${CHAT[ID]} "pong"
@@ -42,11 +42,12 @@ if [[ ${MESSAGE:0:1} == "$"  ]]; then
 				
 				'update')
 					send_normal_message ${CHAT[ID]} "$ start update ..."
-					../git pull > /dev/null
+					../../git pull > /dev/null
 					send_normal_message ${CHAT[ID]} "$ update complete"
-					SCRIPT_LOOP="no"
 					nohup ./bashbot.sh -b "$BOT_NAME" &
 					send_normal_message ${CHAT[ID]} "$ reboot"
+					kill $CORE_PID
+					exit 0
 				;;
 				
 				*)

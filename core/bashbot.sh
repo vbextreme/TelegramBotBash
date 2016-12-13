@@ -50,6 +50,9 @@ FILE_REGEX='~/.*'
 SND_CHAT_ID=
 SND_MODE="no"
 SND_MESSAGE=
+CORE_PID=$$
+
+echo "PID::$CORE_PID"
 
 while [[ $# != 0 ]]; do
 	te="$1"
