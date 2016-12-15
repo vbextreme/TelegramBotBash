@@ -330,15 +330,14 @@ function special_command(){
 }
 
 function chan_command_mod(){
-	echo "cmd mod"
+	#echo "cmd mod"
 	
 	local CMD=$(echo $MESSAGE | cut -f1 -d\  )
-	
-	echo "CMD $CMD"
+	#echo "CMD $CMD"
 	
 	case $CMD in
 			'/start')
-				echo "start"
+				#echo "start"
 				log "exec" "/start"
 				db_link_create
 				db_abuse_create
@@ -388,7 +387,7 @@ function chan_command_mod(){
 }
 
 function chan_command_member(){
-	echo "cmd member"
+	#echo "cmd member"
 	
 	local CMD=$(echo $MESSAGE | cut -f1 -d\  )
 	
@@ -430,7 +429,7 @@ function chan_command(){
 		return 0
 	fi
 	
-	echo "fail member"
+	#echo "fail member"
 	log "error" "chan_command can't execute from member message::$MESSAGE"
 }
 
@@ -440,12 +439,12 @@ function chan_command(){
 
 db_abuse_tblAbuse "${CHAT[ID]}" "${USER[ID]}"
 if [[ $? == 1 ]]; then
-	echo "abuse"
+	#echo "abuse"
 	log "exec" "abuse ban chatid::${CHAT[ID]} userid::${USER[ID]}"
 	kick_chat_member "${CHAT[ID]}" "${USER[ID]}"
 	send_normal_message "${CHAT[ID]}" "\$ ban ${USER[USERNAME]}"
 else
-	echo "cmd"
+	#echo "cmd"
 	if [[ ${MESSAGE:0:1} == "$"  ]]; then
 		special_command
 	elif [[ ${MESSAGE:0:1} == "/" ]]; then
