@@ -20,104 +20,430 @@
 #                                                                      #
 ########################################################################
 
-FILE_LOG="$BOT_PREFIX/$BOT_NAME/bot.log"
+##############
+### GLOBAL ###
+##############
 
-#log $1(info, warning, error) $2 message
+FILE_LOG="$BOT_PREFIX/$BOT_NAME/bot.log"
+DATABASE_LINK="$BOT_PREFIX/$BOT_NAME/link.db"
+DATABASE_ENABLED="$BOT_PREFIX/$BOT_NAME/enabled.db"
+DATABASE_ABUSE="$BOT_PREFIX/$BOT_NAME/abuse.db"
+
+FILE_LOG="./bot.log"
+DATABASE_LINK="./link.db"
+DATABASE_ENABLED="./enabled.db"
+DATABASE_ABUSE="./abuse.db"
+
+#####################
+### HELP FUNCTION ###
+#####################
+
+#log $1(info, warning, error,exec) $2 message
 function log(){
 	dt=$(date)
 	echo "[$dt ++ ${CHAT[USERNAME]} ++ ${USER[USERNAME]} ++ ${USER[ID]}] $1: $2" >> $FILE_LOG
 }	
 
-function special_command(){
-	get_chat_member ${CHAT[ID]} ${USER[ID]}
+#####################
+### DATABASE LINK ###
+#####################
+
+function db_link_create(){
+	if [ ! -f "$DATABASE_LINK" ]; then
+		local QUERY="CREATE TABLE tblLink (id INTEGER PRIMARY KEY, bookgroup TEXT, name TEXT, link TEXT);"
+		echo "$QUERY" | sqlite3 "$DATABASE_LINK"
+		log "info" "new database $DATABASE_LINK"
+	fi
+}
+
+function db_link_tblLink_insert(){
+	local GROUP=$(echo -n "$1" | base64 | tr '\n' '#')
+	local NAME=$(echo -n "$2" | base64 | tr '\n' '#')
+	local LINK=$(echo -n "$3" | base64 | tr '\n' '#')
+	local QUERY="INSERT INTO tblLink (bookgroup,name,link) VALUES ('$GROUP','$NAME','$LINK');"
+	sqlite3 $DATABASE_LINK "$QUERY"
+}
+
+function db_link_tblLink_delete(){
+	local GROUP=$(echo -n "$1" | base64 | tr '\n' '#')
+	local NAME=$(echo -n "$2" | base64 | tr '\n' '#')
+	local LINK=$(echo -n "$3" | base64 | tr '\n' '#')
+	local QUERY="DELETE FROM tblLink WHERE bookgroup = '$GROUP' AND name = '$NAME' AND link = '$LINK';"
+	sqlite3 $DATABASE_LINK "$QUERY"
+}
+
+function db_link_tblLink(){
+	local GROUP=$(echo -n "$1" | base64 | tr '\n' '#')
+	local NAME=$(echo -n "$2" | base64 | tr '\n' '#')
+	local QUERY="SELECT * FROM tblLink WHERE bookgroup = '$GROUP' AND name = '$NAME';"
+	DB_RET=$(sqlite3 $DATABASE_LINK "$QUERY" | cut -f4 -d\| )
 	
-	if [[ ${CHATMEMBER[OK]} != "true" ]]; then
-		echo "fail ok"
+	if [[ $DB_RET == "" ]]; then
+		send_normal_message "${CHAT[ID]}" "\$ no data"
+	else
+		while read -r line; do
+			line=$(echo "$line" | tr '#' '\n' | base64 -d)
+			send_normal_message "${CHAT[ID]}" "\$ $line"
+		done <<< "$DB_RET"
+	fi
+}
+
+########################
+### DATABASE ENABLED ###
+########################
+
+function db_enabled_create(){
+	if [ ! -f "$DATABASE_ENABLED" ]; then
+		local QUERY="CREATE TABLE tblEnabled (id INTEGER PRIMARY KEY, chanID TEXT, chanName TEXT, status TEXT);"
+		echo "$QUERY" | sqlite3 "$DATABASE_ENABLED"
+		log "info" "new database $DATABASE_ENABLED"
 		return 1
 	fi
-	
-	if [[ ${CHATMEMBER[STATUS]} != creator && ${CHATMEMBER[STATUS]} != administrator ]]; then
-		echo "fail status"
-		return 2
-	fi
-	
-	CMD=$(echo $MESSAGE | cut -f2 -d\  )
-	
-	case $CMD in
-		'ping')
-			send_normal_message ${CHAT[ID]} "pong"
-		;;		
-		'update')
-			send_normal_message ${CHAT[ID]} "$ start update ..."
-			cd ..
-			git pull > /dev/null
-			cd ./core
-			send_normal_message ${CHAT[ID]} "$ update complete"
-			nohup ./bashbot.sh -b "$BOT_NAME" &
-			send_normal_message ${CHAT[ID]} "$ reboot"
-			kill $CORE_PID
-			exit 0
-		;;
-		'log')
-			local RP=$(cat $FILE_LOG)
-			send_normal_message "${CHAT[ID]}" "$RP"
-		;;		
-		*)
-			log "warning" "unavailable $ command '$MESSAGE'"
-		;;
-	esac
-	
 	return 0
 }
 
-function chan_command(){
-	get_chat_member ${CHAT[ID]} ${USER[ID]}
+function db_enabled_tblEnabled_insert(){
+	local CHANID=$(echo -n "$1" | base64 | tr '\n' '#')
+	local CHANNAME=$(echo -n "$2" | base64 | tr '\n' '#')
+	local STATUS=$(echo -n "$3" | base64 | tr '\n' '#')
+	local QUERY="INSERT INTO tblEnabled (chanID,chanName,status) VALUES ('$CHANID','$CHANNAME','$STATUS');"
+	sqlite3 $DATABASE_ENABLED "$QUERY"
+}
+
+function db_enabled_tblEnabled_update(){
+	local CHANID=$(echo -n "$1" | base64 | tr '\n' '#')
+	local STATUS=$(echo -n "$2" | base64 | tr '\n' '#')
+	local QUERY="UPDATE tblEnabled SET status = '$STATUS' WHERE chanID = '$CHANID';"
+	sqlite3 $DATABASE_ENABLED "$QUERY"
+}
+
+function db_enabled_tblEnabled_delete(){
+	local CHANID=$(echo -n "$1" | base64 | tr '\n' '#')
+	local QUERY="DELETE FROM tblEnabled WHERE chanID = '$CHANID';"
+	sqlite3 $DATABASE_ENABLED "$QUERY"
+}
+
+function db_enabled_tblEnabled(){
+	local CHANID=$(echo -n "$1" | base64 | tr '\n' '#')
+	local QUERY="SELECT * FROM tblEnabled WHERE chanID = '$CHANID';"
+	DB_RET=$(sqlite3 $DATABASE_ENABLED "$QUERY" | cut -f4 -d\| )
+}
+
+######################
+### DATABASE ABUSE ###
+######################
+
+function db_abuse_create(){
+	if [ ! -f "$DATABASE_ABUSE" ]; then
+		local QUERY="CREATE TABLE tblAbuse (id INTEGER PRIMARY KEY, chanID TEXT, userID TEXT, userName TEXT);"
+		echo "$QUERY" | sqlite3 "$DATABASE_ABUSE"
+		log "info" "new database $DATABASE_NAME"
+	fi
+}
+
+function db_abuse_tblAbuse_insert(){
+	local CHANID=$(echo -n "$1" | base64 | tr '\n' '#')
+	local USERID=$(echo -n "$3" | base64 | tr '\n' '#')
+	local USERNAME=$(echo -n "$4" | base64 | tr '\n' '#')
+	local QUERY="INSERT INTO tblAbuse (chanID,userID,userName) VALUES ('$CHANID','$USERID','$USERNAME');"
+	sqlite3 $DATABASE_ABUSE "$QUERY"
+}
+
+function db_abuse_tblAbuse_delete(){
+	local CHANID=$(echo -n "$1" | base64 | tr '\n' '#')
+	local USERNAME=$(echo -n "$3" | base64 | tr '\n' '#')
+	local QUERY="DELETE FROM tblAbuse WHERE chanID = '$CHANID' AND userName = '$USERNAME';"
+	sqlite3 $DATABASE_ABUSE "$QUERY"
+}
+
+function db_abuse_tblAbuse_userid(){
+	local CHANID=$(echo -n "$1" | base64 | tr '\n' '#')
+	local USERNAME=$(echo -n "$2" | base64 | tr '\n' '#')
+	local QUERY="SELECT * FROM tblAbuse WHERE chanID = '$CHANID' AND userName = '$USERNAME';"
+	DB_RET=$(sqlite3 $DATABASE_ABUSE "$QUERY" | cut -f3 -d\| )
+}
+
+function db_abuse_tblAbuse(){
+	local CHANID=$(echo -n "$1" | base64 | tr '\n' '#')
+	local USERID=$(echo -n "$2" | base64 | tr '\n' '#')
+	local QUERY="SELECT * FROM tblAbuse WHERE chanID = '$CHANID' AND userID = '$USERID';"
+	DB_RET=$(sqlite3 $DATABASE_ABUSE "$QUERY" | cut -f3 -d\| )
+	if [[ "$DB_RET" == "" ]]; then
+		return 0
+	fi
+	return 1
+}
+
+##################################
+### FUNCTION FOR PARSE COMMAND ###
+##################################
+
+function special_command_creator(){
+	local CMD=$(echo "$MESSAGE" | cut -f2 -d\  )
 	
-	if [[ ${CHATMEMBER[OK]} != "true" ]]; then
-		return 1
+	case $CMD in
+		'chan')
+			local argChanID=$( echo $MESSAGE | cut -f3 -d\ )
+			local argChanName=$( echo $MESSAGE | cut -f4 -d\ )
+			local argStatus=$( echo $MESSAGE | cut -f5 -d\ )
+			if [[ "$argChanID" == "" || "$argChanName" == "" || "$argStatus" == "" ]]; then
+				log "error" "\$ chan chatid::${CHAT[ID]} message::$MESSAGE"
+				send_normal_message "${CHAT[ID]}" "\$ usage: \$ chan <chanID> <chanName> <status>"
+				return 0
+			fi
+			log "exec" "\$ chan chatid::$argChanID chatName::$argChatName status::$argStatus"
+			db_enabled_tblEnabled "$argChanID"
+			if [[ "$DB_RET" == "" ]]; then
+				db_enabled_tblEnabled_insert "$argChanID" "$argChanName" "$argStatus"
+			else
+				db_enabled_tblEnabled_update "$argChanID" "$argStatus"
+			fi
+			
+			send_normal_message "${CHAT[ID]}" "\$ $argChanName $argStatus"
+		;;
+		
+		'abuse')
+			if [[ "${MESSAGE[FROM_USERNAME]}" == "" ]]; then
+				log "error" "\$ abuse chatid::${CHAT[ID]} message::$MESSAGE"
+				send_normal_message "${CHAT[ID]}" "\$ usage: quote message and \$ abuse"
+				return 0
+			fi
+			log "exec" "\$ abuse chatid::${CHAT[ID]} userName::${MESSAGE[FROM_USERNAME]}"
+			db_abuse_tblAbuse "${CHAT[ID]}" "${MESSAGE[FROM_ID]}" 
+			if [[ $? == 0 ]]; then
+				db_abuse_tblAbuse_insert "${CHAT[ID]}" "${MESSAGE[FROM_ID]}" "${MESSAGE[FROM_USERNAME]}"
+			fi
+			kick_chat_member "${CHAT[ID]}" "${MESSAGE[FROM_ID]}"
+			send_normal_message "${CHAT[ID]}" "\$ ban ${MESSAGE[FROM_USERNAME]}"
+		;;
+		
+		'solve')
+			local argName=$( echo $MESSAGE | cut -f3 -d\ )
+			if [[ "$argName" == "" ]]; then
+				log "error" "\$ solve chatid::${CHAT[ID]} message::$MESSAGE"
+				send_normal_message "${CHAT[ID]}" "\$ usage: \$ solve <username>"
+				return 0
+			fi
+			log "exec" "\$ solve chatid::${CHAT[ID]} userName::$argName"
+			db_abuse_tblAbuse_userid "${CHAT[ID]}" "$argName"
+			if [[ "$DB_RET" != "" ]]; then
+				local UI=$DB_RET
+				db_abuse_tblAbuse "${CHAT[ID]}" "$UI"
+				if [[ $? == 1 ]]; then
+					db_abuse_tblAbuse_delete "${CHAT[ID]}" "$argName"
+				fi
+				unban_chat_member "${CHAT[ID]}" "$UI"
+			fi
+			send_normal_message "${CHAT[ID]}" "\$ solve $argName"
+		;;
+		
+		'link.add')
+			local argGroup=$( echo $MESSAGE | cut -f3 -d\ )
+			local argName=$( echo $MESSAGE | cut -f4 -d\ )
+			local argLink=$( echo $MESSAGE | cut -f5 -d\ )
+			if [[ "$argGroup" == "" || "$argName" == "" || "$argLink" == "" ]]; then
+				log "error" "\$ link.add chatid::${CHAT[ID]} message::$MESSAGE"
+				send_normal_message "${CHAT[ID]}" "\$ usage: \$ link.add <group> <name> <link>"
+				return 0
+			fi
+			log "exec" "\$ link.add chatid::${CHAT[ID]} grp::$argGroup name::$argName link::$argLink"
+			db_link_tblLink_insert "$argGroup" "$argName" "$argLink"
+			send_normal_message "${CHAT[ID]}" "\$ new link available"
+		;;
+		'link.delete')
+			local argGroup=$( echo $MESSAGE | cut -f3 -d\ )
+			local argName=$( echo $MESSAGE | cut -f4 -d\ )
+			local argLink=$( echo $MESSAGE | cut -f5 -d\ )
+			if [[ "$argGroup" == "" || "$argName" == "" || "$argLink" == "" ]]; then
+				log "error" "\$ link.delete chatid::${CHAT[ID]} message::$MESSAGE"
+				send_normal_message "${CHAT[ID]}" "\$ usage: \$ link.delete <group> <name> <link>"
+				return 0
+			fi
+			log "exec" "\$ link.delete chatid::${CHAT[ID]} grp::$argGroup name::$argName link::$argLink"
+			db_link_tblLink_delete "$argGroup" "$argName" "$argLink"
+			send_normal_message "${CHAT[ID]}" "\$ if have data I have delete"
+		;;
+		
+		'update')
+			log "exec" "\$ update chatid::${CHAT[ID]} userid::${USER[ID]}"
+			send_normal_message "${CHAT[ID]}" "\$ start update ..."
+			cd ..
+			git pull > /dev/null
+			cd ./core
+			send_normal_message "${CHAT[ID]}" "\$ update complete"
+			nohup ./bashbot.sh -b "$BOT_NAME" &
+			send_normal_message "${CHAT[ID]}" "\$ reboot"
+			kill $CORE_PID
+			exit 0
+		;;
+		
+		'ping')
+			log "exec" "\$ ping chatid::${CHAT[ID]} userid::${USER[ID]}"
+			send_normal_message "${CHAT[ID]}" "pong"
+		;;
+		
+		'log')
+			log "exec" "\$ log chatid::${CHAT[ID]} userid::${USER[ID]}"
+			local RP=$(cat $FILE_LOG | tail -n 10)
+			send_normal_message "${CHAT[ID]}" "$RP"
+		;;
+	esac
+}
+
+function special_command_admin(){
+	local CMD=$(echo "$MESSAGE" | cut -f2 -d\  )
+	
+	case $CMD in
+		'ping')
+			log "exec" "\$ ping chatid::${CHAT[ID]} userid::${USER[ID]}"
+			send_normal_message "${CHAT[ID]}" "pong"
+		;;		
+		*)
+			log "warning" "unavailable \$ message::'$MESSAGE'"
+		;;
+	esac
+}
+
+function special_command(){
+	db_enabled_tblEnabled "${CHAT[ID]}"
+	if [[ "$DB_RET" != 'enabled' ]]; then
+		if [[ "$DB_RET" == "" ]]; then
+			db_enabled_tblEnabled_insert "${CHAT[ID]}" "${CHAT[USERNAME]}" "disable"
+		fi
+		log "error" "chan not enabled"
+		return 0
 	fi
 	
-	CMD=$(echo $MESSAGE | cut -f1 -d\  )
+	get_chat_member "${CHAT[ID]}" "${USER[ID]}"
 	
-	if [[ ${CHATMEMBER[STATUS]} == creator || ${CHATMEMBER[STATUS]} == administrator ]]; then
-		case $CMD in
+	if [[ "${CHATMEMBER[OK]}" != "true" ]]; then
+		log "error" "special_command invalid CHATMEMBER"
+		return 0
+	fi
+	
+	if [[ "${CHATMEMBER[STATUS]}" == creator ]]; then
+		special_command_creator
+		return 0
+	fi
+	
+	if [[ "${CHATMEMBER[STATUS]}" == administrator ]]; then
+		special_command_admin
+		return 0
+	fi
+	
+	log "error" "special_command can't execute from member message::$MESSAGE"
+}
+
+function chan_command_mod(){
+	local CMD=$(echo $MESSAGE | cut -f1 -d\  )
+	
+	case $CMD in
 			'/start')
+				log "exec" "/start"
+				db_link_create
+				db_abuse_create
+				db_enabled_create
+				if [[ $? == 1 ]]; then
+					db_enabled_tblEnabled_insert "${CHAT[ID]}" "${CHAT[USERNAME]}" "enabled"
+					send_normal_message "${CHAT[ID]}" "\$ chan init"
+				fi
+				send_normal_message "${CHAT[ID]}" "\$ start"
+			;;			
+			
+			'/info')
+				log "exec" "/info"
+				send_normal_message "${CHAT[ID]}" "\$ chaID::${CHAT[ID]} chatName::${CHAT[USERNAME]}"
 			;;
-				
+			
 			'/ban')
+				log "exec" "/ban chatid::${CHAT[ID]} userid::${MESSAGE[FROM_ID]} username::${MESSAGE[FROM_USERNAME]}"
 				kick_chat_member "${CHAT[ID]}" "${MESSAGE[FROM_ID]}"
-				send_normal_message "${CHAT[ID]}" "$ ban $MESSAGE[FROM_USERNAME]"
+				send_normal_message "${CHAT[ID]}" "\$ ban {$MESSAGE[FROM_USERNAME]}"
 			;;
 				
 			'/kick')
+				log "exec" "/kick chatid::${CHAT[ID]} userid::${MESSAGE[FROM_ID]} username::${MESSAGE[FROM_USERNAME]}"
 				kick_chat_member "${CHAT[ID]}" "${MESSAGE[FROM_ID]}"
 				unban_chat_member "${CHAT[ID]}" "${MESSAGE[FROM_ID]}"
 				send_normal_message "${CHAT[ID]}" "\$ kick ${MESSAGE[FROM_USERNAME]}"
 			;;
-				
+			
+			'/link')
+				log "exec" "/link"
+				local argGroup=$( echo $MESSAGE | cut -f2 -d\ )
+				local argName=$( echo $MESSAGE | cut -f3 -d\ )
+				if [[ "$argGroup" == "" || "$argName" == "" ]]; then
+					log "error" "/link chatid::${CHAT[ID]} message::$MESSAGE"
+					send_normal_message "${CHAT[ID]}" "\$ usage: /link <group> <name>"
+					return 0
+				fi
+				log "exec" "/link chatid::${CHAT[ID]} grp::$argGroup name::$argName"
+				db_link_tblLink "$argGroup" "$argName"
+			;;
+		
 			*)
-				log "warning" "unavailable / command '$MESSAGE'"
+				log "warning" "unavailable admin / message::'$MESSAGE'"
 			;;
-		esac
-	else
-		case $CMD in
-			'/part'|'/suicide'|'/suicidegirls')
-				kick_chat_member "${CHAT[ID]}" "${USER[ID]}"
-				unban_chat_member "${CHAT[ID]}" "${USER[ID]}"
-				send_normal_message "${CHAT[ID]}" "\$ kick ${USER[USERNAME]}"
-			;;
-				
-			*)
-				log "warning" "unavailable / command '$MESSAGE'"
-			;;
-		esac
+	esac
+}
+
+function chan_command_member(){
+	local CMD=$(echo $MESSAGE | cut -f1 -d\  )
+	
+	case $CMD in
+		'/part'|'/suicide'|'/suicidegirls')
+			log "exec" "/part chatid::${CHAT[ID]} userid::${USER[ID]}"
+			kick_chat_member "${CHAT[ID]}" "${USER[ID]}"
+			unban_chat_member "${CHAT[ID]}" "${USER[ID]}"
+			send_normal_message "${CHAT[ID]}" "\$ kick ${USER[USERNAME]}"
+		;;
+		
+		'/link')
+			log "exec" "/link"
+			local argGroup=$( echo $MESSAGE | cut -f2 -d\ )
+			local argName=$( echo $MESSAGE | cut -f3 -d\ )
+			if [[ "$argGroup" == "" || "$argName" == "" ]]; then
+				log "error" "/link chatid::${CHAT[ID]} message::$MESSAGE"
+				send_normal_message "${CHAT[ID]}" "\$ usage: /link <group> <name>"
+				return 0
+			fi
+			log "exec" "/link chatid::${CHAT[ID]} grp::$argGroup name::$argName"
+			db_link_tblLink "$argGroup" "$argName"
+		;;
+		
+		*)
+			log "warning" "unavailable user / message::'$MESSAGE'"
+		;;
+	esac
+}
+
+function chan_command(){		
+	
+	
+	if [[ "${CHATMEMBER[STATUS]}" == creator || "${CHATMEMBER[STATUS]}" == administrator ]]; then
+		chan_command_mod
+		return 0
+	elif [[ "${CHATMEMBER[STATUS]}" == member ]]; then
+		chan_command_member
+		return 0
 	fi
 	
-	return 0
+	log "error" "chan_command can't execute from member message::$MESSAGE"
 }
-	
-if [[ ${MESSAGE:0:1} == "$"  ]]; then
-	special_command
-elif [[ ${MESSAGE:0:1} == "/" ]]; then
-	chan_command
+
+################
+### BOT EXEC ###
+################
+
+db_abuse_tblAbuse "${CHAT[ID]}" "${USER[ID]}"
+if [[ $? == 1 ]]; then
+	log "exec" "abuse ban chatid::${CHAT[ID]} userid::${USER[ID]}"
+	kick_chat_member "${CHAT[ID]}" "${USER[ID]}"
+	send_normal_message "${CHAT[ID]}" "\$ ban ${USER[USERNAME]}"
+else
+	if [[ ${MESSAGE:0:1} == "$"  ]]; then
+		special_command
+	elif [[ ${MESSAGE:0:1} == "/" ]]; then
+		chan_command
+	fi
 fi
