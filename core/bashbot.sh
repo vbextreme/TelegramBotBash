@@ -407,6 +407,8 @@ process_updates() {
 	done
 }
 process_client() {
+	echo "process client"
+	echo "process message"
 	# Message
 	MESSAGE[0]=$(echo -e $(echo "$UPDATE" | egrep '\["result",'$PROCESS_NUMBER',"message","text"\]' | cut -f 2 | cut -d '"' -f 2) | sed 's#\\/#/#g')
 	MESSAGE[ID]=$(echo "$UPDATE" | egrep '\["result",'$PROCESS_NUMBER',"message","message_id"\]' | cut -f 2 | cut -d '"' -f 2)
@@ -417,6 +419,7 @@ process_client() {
 	MESSAGE[FROM_CHAT_TITLE]=$(echo $UPDATE | tr '[' '\n' | egrep '"result",0,"message","reply_to_message","chat","title"\]' | cut -f2 -d\ | sed -e 's/^"//' -e 's/"$//')
 	MESSAGE[FROM_CHAT_USERNAME]=$(echo $UPDATE | tr '[' '\n' | egrep '"result",0,"message","reply_to_message","chat","username"\]' | cut -f2 -d\ | sed -e 's/^"//' -e 's/"$//')
 	MESSAGE[FROM_CHAT_TYPE]=$(echo $UPDATE | tr '[' '\n' | egrep '"result",0,"message","reply_to_message","chat","type"\]' | cut -f2 -d\ | sed -e 's/^"//' -e 's/"$//')
+	echo "process chat"
 	# Chat
 	CHAT[ID]=$(echo "$UPDATE" | egrep '\["result",'$PROCESS_NUMBER',"message","chat","id"\]' | cut -f 2)
 	CHAT[FIRST_NAME]=$(echo "$UPDATE" | egrep '\["result",'$PROCESS_NUMBER',"message","chat","first_name"\]' | cut -f 2 | cut -d '"' -f 2)
@@ -425,36 +428,37 @@ process_client() {
 	CHAT[TITLE]=$(echo "$UPDATE" | egrep '\["result",'$PROCESS_NUMBER',"message","chat","title"\]' | cut -f 2 | cut -d '"' -f 2)
 	CHAT[TYPE]=$(echo "$UPDATE" | egrep '\["result",'$PROCESS_NUMBER',"message","chat","type"\]' | cut -f 2 | cut -d '"' -f 2)
 	CHAT[ALL_MEMBERS_ARE_ADMINISTRATORS]=$(echo "$UPDATE" | egrep '\["result",'$PROCESS_NUMBER',"message","chat","all_members_are_administrators"\]' | cut -f 2 | cut -d '"' -f 2)
-	# User
+	echo "process user"
 	USER[ID]=$(echo "$UPDATE" | egrep '\["result",'$PROCESS_NUMBER',"message","from","id"\]' | cut -f 2)
 	USER[FIRST_NAME]=$(echo "$UPDATE" | egrep '\["result",'$PROCESS_NUMBER',"message","from","first_name"\]' | cut -f 2 | cut -d '"' -f 2)
 	USER[LAST_NAME]=$(echo "$UPDATE" | egrep '\["result",'$PROCESS_NUMBER',"message","from","last_name"\]' | cut -f 2 | cut -d '"' -f 2)
 	USER[USERNAME]=$(echo "$UPDATE" | egrep '\["result",'$PROCESS_NUMBER',"message","from","username"\]' | cut -f 2 | cut -d '"' -f 2)
-	# Audio
+	echo "process audio"
 	URLS[AUDIO]=$(get_file $(echo "$UPDATE" | egrep '\["result",'$PROCESS_NUMBER',"message","audio","file_id"\]' | cut -f 2 | cut -d '"' -f 2))
-	# Document
+	echo "process document"
 	URLS[DOCUMENT]=$(get_file $(echo "$UPDATE" | egrep '\["result",'$PROCESS_NUMBER',"message","document","file_id"\]' | cut -f 2 | cut -d '"' -f 2))
-	# Photo
+	echo "process foto"
 	URLS[PHOTO]=$(get_file $(echo "$UPDATE" | egrep '\["result",'$PROCESS_NUMBER',"message","photo",.*,"file_id"\]' | cut -f 2 | cut -d '"' -f 2 | sed -n '$p'))
-	# Sticker
+	echo "process sticker"
 	URLS[STICKER]=$(get_file $(echo "$UPDATE" | egrep '\["result",'$PROCESS_NUMBER',"message","sticker","file_id"\]' | cut -f 2 | cut -d '"' -f 2))
-	# Video
+	echo "process Video"
 	URLS[VIDEO]=$(get_file $(echo "$UPDATE" | egrep '\["result",'$PROCESS_NUMBER',"message","video","file_id"\]' | cut -f 2 | cut -d '"' -f 2))
-	# Voice
+	echo "process Voice"
 	URLS[VOICE]=$(get_file $(echo "$UPDATE" | egrep '\["result",'$PROCESS_NUMBER',"message","voice","file_id"\]' | cut -f 2 | cut -d '"' -f 2))
-	# Contact
+	echo "process contact"
 	CONTACT[NUMBER]=$(echo "$UPDATE" | egrep '\["result",'$PROCESS_NUMBER',"message","contact","phone_number"\]' | cut -f 2 | cut -d '"' -f 2)
 	CONTACT[FIRST_NAME]=$(echo "$UPDATE" | egrep '\["result",'$PROCESS_NUMBER',"message","contact","first_name"\]' | cut -f 2 | cut -d '"' -f 2)
 	CONTACT[LAST_NAME]=$(echo "$UPDATE" | egrep '\["result",'$PROCESS_NUMBER',"message","contact","last_name"\]' | cut -f 2 | cut -d '"' -f 2)
 	CONTACT[USER_ID]=$(echo "$UPDATE" | egrep '\["result",'$PROCESS_NUMBER',"message","contact","user_id"\]' | cut -f 2 | cut -d '"' -f 2)
-	# Caption
+	echo "process caption"
 	CAPTION=$(echo "$UPDATE" | egrep '\["result",'$PROCESS_NUMBER',"message","caption"\]' | cut -f 2 | cut -d '"' -f 2)
-	# Location
+	echo "process location"
 	LOCATION[LONGITUDE]=$(echo "$UPDATE" | egrep '\["result",'$PROCESS_NUMBER',"message","location","longitude"\]' | cut -f 2 | cut -d '"' -f 2)
 	LOCATION[LATITUDE]=$(echo "$UPDATE" | egrep '\["result",'$PROCESS_NUMBER',"message","location","latitude"\]' | cut -f 2 | cut -d '"' -f 2)
 	NAME="$(echo ${URLS[*]} | sed 's/.*\///g')"
 	
 	echo "call $COMMAND_SCRIPT"
+	
 	source $COMMAND_SCRIPT
 }
 
