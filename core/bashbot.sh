@@ -453,13 +453,14 @@ process_client() {
 	LOCATION[LONGITUDE]=$(echo "$UPDATE" | egrep '\["result",'$PROCESS_NUMBER',"message","location","longitude"\]' | cut -f 2 | cut -d '"' -f 2)
 	LOCATION[LATITUDE]=$(echo "$UPDATE" | egrep '\["result",'$PROCESS_NUMBER',"message","location","latitude"\]' | cut -f 2 | cut -d '"' -f 2)
 	NAME="$(echo ${URLS[*]} | sed 's/.*\///g')"
-
+	
+	echo "call $COMMAND_SCRIPT"
 	source $COMMAND_SCRIPT
 }
 
 # source the script with source as param to use functions in other scripts
 while [ $SCRIPT_LOOP == "yes" ]; do {
-	#echo "wait message"
+	echo "wait message"
 	UPDATE=$(curl -s $UPD_URL$OFFSET | ./JSON.sh/JSON.sh)
 	# Offset
 	OFFSET=$(echo "$UPDATE" | egrep '\["result",[0-9]*,"update_id"\]' | tail -1 | cut -f 2)
