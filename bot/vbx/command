@@ -418,7 +418,7 @@ function chan_command_member(){
 }
 
 function chan_command(){		
-	
+	get_chat_member "${CHAT[ID]}" "${USER[ID]}"
 	
 	if [[ "${CHATMEMBER[STATUS]}" == creator || "${CHATMEMBER[STATUS]}" == administrator ]]; then
 		chan_command_mod
