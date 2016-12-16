@@ -56,7 +56,7 @@ function db_link_tblLink_insert(){
 	local NAME=$(echo -n "$2" | base64 | tr '\n' '#')
 	local LINK=$(echo -n "$3" | base64 | tr '\n' '#')
 	local QUERY="INSERT INTO tblLink (bookgroup,name,link) VALUES ('$GROUP','$NAME','$LINK');"
-	sqlite3 $DATABASE_LINK "$QUERY"
+	sqlite3 "$DATABASE_LINK" "$QUERY"
 }
 
 function db_link_tblLink_delete(){
@@ -64,14 +64,14 @@ function db_link_tblLink_delete(){
 	local NAME=$(echo -n "$2" | base64 | tr '\n' '#')
 	local LINK=$(echo -n "$3" | base64 | tr '\n' '#')
 	local QUERY="DELETE FROM tblLink WHERE bookgroup = '$GROUP' AND name = '$NAME' AND link = '$LINK';"
-	sqlite3 $DATABASE_LINK "$QUERY"
+	sqlite3 "$DATABASE_LINK" "$QUERY"
 }
 
 function db_link_tblLink(){
 	local GROUP=$(echo -n "$1" | base64 | tr '\n' '#')
 	local NAME=$(echo -n "$2" | base64 | tr '\n' '#')
 	local QUERY="SELECT * FROM tblLink WHERE bookgroup = '$GROUP' AND name = '$NAME';"
-	DB_RET=$(sqlite3 $DATABASE_LINK "$QUERY" | cut -f4 -d\| )
+	DB_RET=$(sqlite3 "$DATABASE_LINK" "$QUERY" | cut -f4 -d\| )
 	
 	if [[ $DB_RET == "" ]]; then
 		send_normal_message "${CHAT[ID]}" "\$ no data"
@@ -98,30 +98,49 @@ function db_enabled_create(){
 }
 
 function db_enabled_tblEnabled_insert(){
+	log "info" "enabled insert"
+	
 	local CHANID=$(echo -n "$1" | base64 | tr '\n' '#')
-	local CHANNAME=$(echo -n "$2" | base64 | tr '\n' '#')
+	local CHANNAME=""
+	if [[ "$2" == "" ]]; then
+		CHANNAME="private"
+	else
+		CHANNAME=$(echo -n "$2" | base64 | tr '\n' '#')
+	fi
 	local STATUS=$(echo -n "$3" | base64 | tr '\n' '#')
 	local QUERY="INSERT INTO tblEnabled (chanID,chanName,status) VALUES ('$CHANID','$CHANNAME','$STATUS');"
-	sqlite3 $DATABASE_ENABLED "$QUERY"
+	sqlite3 "$DATABASE_ENABLED" "$QUERY"
 }
 
 function db_enabled_tblEnabled_update(){
+	log "info" "enabled update"
 	local CHANID=$(echo -n "$1" | base64 | tr '\n' '#')
 	local STATUS=$(echo -n "$2" | base64 | tr '\n' '#')
 	local QUERY="UPDATE tblEnabled SET status = '$STATUS' WHERE chanID = '$CHANID';"
-	sqlite3 $DATABASE_ENABLED "$QUERY"
+	sqlite3 "$DATABASE_ENABLED" "$QUERY"
 }
 
 function db_enabled_tblEnabled_delete(){
+	log "info" "enabled delete"
 	local CHANID=$(echo -n "$1" | base64 | tr '\n' '#')
 	local QUERY="DELETE FROM tblEnabled WHERE chanID = '$CHANID';"
-	sqlite3 $DATABASE_ENABLED "$QUERY"
+	sqlite3 "$DATABASE_ENABLED" "$QUERY"
 }
 
 function db_enabled_tblEnabled(){
+	log "info" "enabled search"
 	local CHANID=$(echo -n "$1" | base64 | tr '\n' '#')
 	local QUERY="SELECT * FROM tblEnabled WHERE chanID = '$CHANID';"
 	DB_RET=$(sqlite3 $DATABASE_ENABLED "$QUERY" | cut -f4 -d\| )
+	if [[ "$DB_RET" != "" ]]; then
+		DB_RET=$(echo "$DB_RET" | base64 -d)
+		if [[ "$DB_RET" == "enabled" ]]; then
+			return 2
+		else
+			return 1
+		fi
+	fi
+	return 0
 }
 
 ######################
@@ -132,37 +151,42 @@ function db_abuse_create(){
 	if [ ! -f "$DATABASE_ABUSE" ]; then
 		local QUERY="CREATE TABLE tblAbuse (id INTEGER PRIMARY KEY, chanID TEXT, userID TEXT, userName TEXT);"
 		echo "$QUERY" | sqlite3 "$DATABASE_ABUSE"
-		log "info" "new database $DATABASE_NAME"
+		log "info" "new database $DATABASE_ABUSE"
+		db_abuse_tblAbuse_insert "000" "000" "000"
 	fi
 }
 
 function db_abuse_tblAbuse_insert(){
+	log "info" "abuse insert"
 	local CHANID=$(echo -n "$1" | base64 | tr '\n' '#')
 	local USERID=$(echo -n "$3" | base64 | tr '\n' '#')
 	local USERNAME=$(echo -n "$4" | base64 | tr '\n' '#')
 	local QUERY="INSERT INTO tblAbuse (chanID,userID,userName) VALUES ('$CHANID','$USERID','$USERNAME');"
-	sqlite3 $DATABASE_ABUSE "$QUERY"
+	sqlite3 "$DATABASE_ABUSE" "$QUERY"
 }
 
 function db_abuse_tblAbuse_delete(){
+	log "info" "abuse delete"
 	local CHANID=$(echo -n "$1" | base64 | tr '\n' '#')
 	local USERNAME=$(echo -n "$3" | base64 | tr '\n' '#')
 	local QUERY="DELETE FROM tblAbuse WHERE chanID = '$CHANID' AND userName = '$USERNAME';"
-	sqlite3 $DATABASE_ABUSE "$QUERY"
+	sqlite3 "$DATABASE_ABUSE" "$QUERY"
 }
 
 function db_abuse_tblAbuse_userid(){
+	log "info" "abuse search user id"
 	local CHANID=$(echo -n "$1" | base64 | tr '\n' '#')
 	local USERNAME=$(echo -n "$2" | base64 | tr '\n' '#')
 	local QUERY="SELECT * FROM tblAbuse WHERE chanID = '$CHANID' AND userName = '$USERNAME';"
-	DB_RET=$(sqlite3 $DATABASE_ABUSE "$QUERY" | cut -f3 -d\| )
+	DB_RET=$(sqlite3 "$DATABASE_ABUSE" "$QUERY" | cut -f3 -d\| )
 }
 
 function db_abuse_tblAbuse(){
+	log "info" "abuse search"
 	local CHANID=$(echo -n "$1" | base64 | tr '\n' '#')
 	local USERID=$(echo -n "$2" | base64 | tr '\n' '#')
 	local QUERY="SELECT * FROM tblAbuse WHERE chanID = '$CHANID' AND userID = '$USERID';"
-	DB_RET=$(sqlite3 $DATABASE_ABUSE "$QUERY" | cut -f3 -d\| )
+	DB_RET=$(sqlite3 "$DATABASE_ABUSE" "$QUERY" | cut -f3 -d\| )
 	if [[ "$DB_RET" == "" ]]; then
 		return 0
 	fi
@@ -188,9 +212,9 @@ function special_command_creator(){
 			fi
 			log "exec" "\$ chan chatid::$argChanID chatName::$argChatName status::$argStatus"
 			db_enabled_tblEnabled "$argChanID"
-			if [[ "$DB_RET" == "" ]]; then
+			if [[ $? == 0 ]]; then
 				db_enabled_tblEnabled_insert "$argChanID" "$argChanName" "$argStatus"
-			else
+			elif [[ $? == 1 || $? == 2 ]]; then
 				db_enabled_tblEnabled_update "$argChanID" "$argStatus"
 			fi
 			
@@ -266,10 +290,13 @@ function special_command_creator(){
 			git pull > /dev/null
 			cd ./core
 			send_normal_message "${CHAT[ID]}" "\$ update complete"
-			nohup ./bashbot.sh -b "$BOT_NAME" &
-			send_normal_message "${CHAT[ID]}" "\$ reboot"
-			kill $CORE_PID
-			exit 0
+			CMD=$(echo "$MESSAGE" | cut -f3 -d\  )
+			if [[ "$CMD" == "reboot" ]]; then
+				nohup ./bashbot.sh -b "$BOT_NAME" &
+				send_normal_message "${CHAT[ID]}" "\$ reboot"
+				kill $CORE_PID
+				exit 0
+			fi
 		;;
 		
 		'ping')
@@ -301,9 +328,9 @@ function special_command_admin(){
 
 function special_command(){
 	db_enabled_tblEnabled "${CHAT[ID]}"
-	if [[ "$DB_RET" != 'enabled' ]]; then
-		if [[ "$DB_RET" == "" ]]; then
-			db_enabled_tblEnabled_insert "${CHAT[ID]}" "${CHAT[USERNAME]}" "disable"
+	if [[ $? != 2 ]]; then
+		if [[ $? == 0 ]]; then
+			db_enabled_tblEnabled_insert "${CHAT[ID]}" "${CHAT[USERNAME]}" "disabled"
 		fi
 		log "error" "chan not enabled"
 		return 0
@@ -437,17 +464,17 @@ function chan_command(){
 ### BOT EXEC ###
 ################
 
-db_abuse_tblAbuse "${CHAT[ID]}" "${USER[ID]}"
-if [[ $? == 1 ]]; then
-	#echo "abuse"
-	log "exec" "abuse ban chatid::${CHAT[ID]} userid::${USER[ID]}"
-	kick_chat_member "${CHAT[ID]}" "${USER[ID]}"
-	send_normal_message "${CHAT[ID]}" "\$ ban ${USER[USERNAME]}"
-else
-	#echo "cmd"
-	if [[ ${MESSAGE:0:1} == "$"  ]]; then
-		special_command
-	elif [[ ${MESSAGE:0:1} == "/" ]]; then
-		chan_command
+if [[ -f "$DATABASE_ABUSE" ]]; then
+	db_abuse_tblAbuse "${CHAT[ID]}" "${USER[ID]}"
+	if [[ $? == 1 ]]; then
+		log "exec" "abuse ban chatid::${CHAT[ID]} userid::${USER[ID]}"
+		kick_chat_member "${CHAT[ID]}" "${USER[ID]}"
+		send_normal_message "${CHAT[ID]}" "\$ ban ${USER[USERNAME]}"
 	fi
+fi
+
+if [[ ${MESSAGE:0:1} == "$"  ]]; then
+	special_command
+elif [[ ${MESSAGE:0:1} == "/" ]]; then
+	chan_command
 fi
