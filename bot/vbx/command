@@ -385,7 +385,7 @@ function chan_command_mod(){
 			
 			'/info')
 				log "exec" "/info"
-				send_normal_message "${CHAT[ID]}" "\$ chaID::${CHAT[ID]} chatName::${CHAT[USERNAME]}"
+				send_normal_message "${CHAT[ID]}" "\$ chaID::${CHAT[ID]} chatName::${CHAT[USERNAME]} fromID::${MESSAGE[FROM_ID]} fromUserName::${MESSAGE[FROM_USERNAME]}"
 			;;
 			
 			'/ban')
