@@ -223,7 +223,7 @@ function special_command_creator(){
 		
 		'abuse')
 			if [[ "${MESSAGE[FROM_ID]}" == "" ]]; then
-				log "error" "\$ abuse no from_i, chatid::${CHAT[ID]} message::$MESSAGE"
+				log "error" "\$ abuse no from_id, chatid::${CHAT[ID]} from_id::${MESSAGE[FROM_ID]} from_username::${MESSAGE[FROM_USERNAME]}"
 				send_normal_message "${CHAT[ID]}" "\$ invalid id, usage: quote message and \$ abuse"
 				return 0
 			fi
@@ -309,6 +309,11 @@ function special_command_creator(){
 			send_normal_message "${CHAT[ID]}" "pong"
 		;;
 		
+		'info')
+			log "exec" "\$ info chatid::${CHAT[ID]} userid::${USER[ID]}"
+			send_normal_message "${CHAT[ID]}" "\$ from ID::${MESSAGE[FROM_ID]} from UserName::${MESSAGE[FROM_USERNAME]}"
+		;;
+		
 		'log')
 			log "exec" "\$ log chatid::${CHAT[ID]} userid::${USER[ID]}"
 			local RP=$(cat $FILE_LOG | tail -n 10)
@@ -348,12 +353,12 @@ function special_command(){
 		return 0
 	fi
 	
-	if [[ "${CHATMEMBER[STATUS]}" == creator ]]; then
+	if [[ "${CHATMEMBER[STATUS]}" == "creator" ]]; then
 		special_command_creator
 		return 0
 	fi
 	
-	if [[ "${CHATMEMBER[STATUS]}" == administrator ]]; then
+	if [[ "${CHATMEMBER[STATUS]}" == "administrator" ]]; then
 		special_command_admin
 		return 0
 	fi
@@ -362,10 +367,7 @@ function special_command(){
 }
 
 function chan_command_mod(){
-	#echo "cmd mod"
-	
 	local CMD=$(echo $MESSAGE | cut -f1 -d\  )
-	#echo "CMD $CMD"
 	
 	case $CMD in
 			'/start')
