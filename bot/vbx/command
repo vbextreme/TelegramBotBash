@@ -222,13 +222,18 @@ function special_command_creator(){
 		;;
 		
 		'abuse')
-			if [[ "${MESSAGE[FROM_USERNAME]}" == "" ]]; then
-				log "error" "\$ abuse chatid::${CHAT[ID]} message::$MESSAGE"
-				send_normal_message "${CHAT[ID]}" "\$ usage: quote message and \$ abuse"
+			if [[ "${MESSAGE[FROM_ID]}" == "" ]]; then
+				log "error" "\$ abuse no from_i, chatid::${CHAT[ID]} message::$MESSAGE"
+				send_normal_message "${CHAT[ID]}" "\$ invalid id, usage: quote message and \$ abuse"
 				return 0
 			fi
 			log "exec" "\$ abuse chatid::${CHAT[ID]} userName::${MESSAGE[FROM_USERNAME]}"
-			db_abuse_tblAbuse "${CHAT[ID]}" "${MESSAGE[FROM_ID]}" 
+			db_abuse_tblAbuse "${CHAT[ID]}" "${MESSAGE[FROM_ID]}"
+			
+			if [[ "${MESSAGE[FROM_USERNAME]}" == "" ]]; then
+				MESSAGE[FROM_USERNAME]="private"
+			fi
+			 
 			if [[ $? == 0 ]]; then
 				db_abuse_tblAbuse_insert "${CHAT[ID]}" "${MESSAGE[FROM_ID]}" "${MESSAGE[FROM_USERNAME]}"
 			fi
@@ -384,7 +389,7 @@ function chan_command_mod(){
 			'/ban')
 				log "exec" "/ban chatid::${CHAT[ID]} userid::${MESSAGE[FROM_ID]} username::${MESSAGE[FROM_USERNAME]}"
 				kick_chat_member "${CHAT[ID]}" "${MESSAGE[FROM_ID]}"
-				send_normal_message "${CHAT[ID]}" "\$ ban {$MESSAGE[FROM_USERNAME]}"
+				send_normal_message "${CHAT[ID]}" "\$ ban ${MESSAGE[FROM_USERNAME]}"
 			;;
 				
 			'/kick')
