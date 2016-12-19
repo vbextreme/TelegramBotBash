@@ -440,8 +440,8 @@ function chan_command_mod(){
 				log "exec" "/link"
 				local argGroup=$( echo $MESSAGE | cut -f2 -d\ )
 				local argName=$( echo $MESSAGE | cut -f3 -d\ )
-				if [[ "$argName" == "" ]]; then
-					if [[ "$argGroup" == "" ]]; then
+				if [[ "$argName" == "" || "$argName" == "/link" ]]; then
+					if [[ "$argGroup" == "" || "$argGroup" == "/link" ]]; then
 						log "exec" "/link group chatid::${CHAT[ID]} grp::$argGroup name::$argName"
 						db_link_tblLink_group
 					else
@@ -477,8 +477,8 @@ function chan_command_member(){
 			log "exec" "/link"
 			local argGroup=$( echo $MESSAGE | cut -f2 -d\ )
 			local argName=$( echo $MESSAGE | cut -f3 -d\ )
-			if [[ "$argName" == "" ]]; then
-				if [[ "$argGroup" == "" ]]; then
+			if [[ "$argName" == "" || "$argName" == "/link" ]]; then
+				if [[ "$argGroup" == "" || "$argGroup" == "/link" ]]; then
 					log "exec" "/link group chatid::${CHAT[ID]} grp::$argGroup name::$argName"
 					db_link_tblLink_group
 				else
