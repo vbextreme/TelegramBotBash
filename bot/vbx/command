@@ -80,7 +80,8 @@ function db_link_tblLink(){
 		while read -r line; do
 			line=$(echo "$line" | tr '#' '\n' | base64 -d)
 			line=$(echo -e "\xF0\x9F\x94\x96 $line")
-			DSP="$DSP$line%0D"
+			DSP="$DSP
+$line"
 		done <<< "$DB_RET"
 		send_normal_message "${CHAT[ID]}" "$DSP"
 	fi
@@ -98,7 +99,8 @@ function db_link_tblLink_group(){
 		while read -r line; do
 			line=$(echo "$line" | tr '#' '\n' | base64 -d)
 			line=$(echo -e "\xF0\x9F\x94\x8E $line")
-			DSP="$DSP$line%0D"
+			DSP="$DSP
+$line"
 		done <<< "$DB_RET"
 		send_normal_message "${CHAT[ID]}" "$DSP"
 	fi
@@ -116,7 +118,8 @@ function db_link_tblLink_name(){
 		while read -r line; do
 			line=$(echo "$line" | tr '#' '\n' | base64 -d)
 			line=$(echo -e "\xF0\x9F\x94\x8E $line")
-			DSP="$DSP$line%0D"
+			DSP="$DSP
+$line"
 		done <<< "$DB_RET"
 		send_normal_message "${CHAT[ID]}" "$DSP"
 	fi
