@@ -83,6 +83,35 @@ function db_link_tblLink(){
 	fi
 }
 
+function db_link_tblLink_group(){
+	local QUERY="SELECT * FROM tblLink GROUP BY bookgroup;"
+	DB_RET=$(sqlite3 "$DATABASE_LINK" "$QUERY" | cut -f2 -d\| )
+	
+	if [[ $DB_RET == "" ]]; then
+		send_normal_message "${CHAT[ID]}" "\$ no data"
+	else
+		while read -r line; do
+			line=$(echo "$line" | tr '#' '\n' | base64 -d)
+			send_normal_message "${CHAT[ID]}" "\$ $line"
+		done <<< "$DB_RET"
+	fi
+}
+
+function db_link_tblLink_name(){
+	local GROUP=$(echo -n "$1" | base64 | tr '\n' '#')
+	local QUERY="SELECT * FROM tblLink WHERE bookgroup = '$GROUP' GROUP BY name;"
+	DB_RET=$(sqlite3 "$DATABASE_LINK" "$QUERY" | cut -f3 -d\| )
+	
+	if [[ $DB_RET == "" ]]; then
+		send_normal_message "${CHAT[ID]}" "\$ no data"
+	else
+		while read -r line; do
+			line=$(echo "$line" | tr '#' '\n' | base64 -d)
+			send_normal_message "${CHAT[ID]}" "\$ $line"
+		done <<< "$DB_RET"
+	fi
+}
+
 ########################
 ### DATABASE ENABLED ###
 ########################
@@ -319,6 +348,12 @@ function special_command_creator(){
 			local RP=$(cat $FILE_LOG | tail -n 10)
 			send_normal_message "${CHAT[ID]}" "$RP"
 		;;
+		
+		'rmlog')
+			rm FILE_LOG
+			log "exec" "\$ rmlog chatid::${CHAT[ID]} userid::${USER[ID]}"
+			send_normal_message "${CHAT[ID]}" "$RP"
+		;;
 	esac
 }
 
@@ -389,7 +424,7 @@ function chan_command_mod(){
 			;;
 			
 			'/ban')
-				log "exec" "/ban chatid::${CHAT[ID]} userid::${MESSAGE[FROM_ID]} username::${MESSAGE[FROM_USERNAME]}"
+				log "exec" "/ban chatid::${CHAT[ID]} fromID::${MESSAGE[FROM_ID]} username::${MESSAGE[FROM_USERNAME]}"
 				kick_chat_member "${CHAT[ID]}" "${MESSAGE[FROM_ID]}"
 				send_normal_message "${CHAT[ID]}" "\$ ban ${MESSAGE[FROM_USERNAME]}"
 			;;
@@ -405,13 +440,18 @@ function chan_command_mod(){
 				log "exec" "/link"
 				local argGroup=$( echo $MESSAGE | cut -f2 -d\ )
 				local argName=$( echo $MESSAGE | cut -f3 -d\ )
-				if [[ "$argGroup" == "" || "$argName" == "" ]]; then
-					log "error" "/link chatid::${CHAT[ID]} message::$MESSAGE"
-					send_normal_message "${CHAT[ID]}" "\$ usage: /link <group> <name>"
-					return 0
+				if [[ "$argName" == "" ]]; then
+					if [[ "$argGroup" == "" ]]; then
+						log "exec" "/link group chatid::${CHAT[ID]} grp::$argGroup name::$argName"
+						db_link_tblLink_group
+					else
+						log "exec" "/link chatid::${CHAT[ID]} grp::$argGroup name::$argName"
+						db_link_tblLink_name "$argGroup"
+					fi
+				else
+					log "exec" "/link chatid::${CHAT[ID]} grp::$argGroup name::$argName"
+					db_link_tblLink "$argGroup" "$argName"
 				fi
-				log "exec" "/link chatid::${CHAT[ID]} grp::$argGroup name::$argName"
-				db_link_tblLink "$argGroup" "$argName"
 			;;
 		
 			*)
@@ -437,13 +477,18 @@ function chan_command_member(){
 			log "exec" "/link"
 			local argGroup=$( echo $MESSAGE | cut -f2 -d\ )
 			local argName=$( echo $MESSAGE | cut -f3 -d\ )
-			if [[ "$argGroup" == "" || "$argName" == "" ]]; then
-				log "error" "/link chatid::${CHAT[ID]} message::$MESSAGE"
-				send_normal_message "${CHAT[ID]}" "\$ usage: /link <group> <name>"
-				return 0
+			if [[ "$argName" == "" ]]; then
+				if [[ "$argGroup" == "" ]]; then
+					log "exec" "/link group chatid::${CHAT[ID]} grp::$argGroup name::$argName"
+					db_link_tblLink_group
+				else
+					log "exec" "/link chatid::${CHAT[ID]} grp::$argGroup name::$argName"
+					db_link_tblLink_name "$argGroup"
+				fi
+			else
+				log "exec" "/link chatid::${CHAT[ID]} grp::$argGroup name::$argName"
+				db_link_tblLink "$argGroup" "$argName"
 			fi
-			log "exec" "/link chatid::${CHAT[ID]} grp::$argGroup name::$argName"
-			db_link_tblLink "$argGroup" "$argName"
 		;;
 		
 		*)
@@ -471,14 +516,14 @@ function chan_command(){
 ### BOT EXEC ###
 ################
 
-if [[ -f "$DATABASE_ABUSE" ]]; then
-	db_abuse_tblAbuse "${CHAT[ID]}" "${USER[ID]}"
-	if [[ $? == 1 ]]; then
-		log "exec" "abuse ban chatid::${CHAT[ID]} userid::${USER[ID]}"
-		kick_chat_member "${CHAT[ID]}" "${USER[ID]}"
-		send_normal_message "${CHAT[ID]}" "\$ ban ${USER[USERNAME]}"
-	fi
-fi
+#if [[ -f "$DATABASE_ABUSE" ]]; then
+#	db_abuse_tblAbuse "${CHAT[ID]}" "${USER[ID]}"
+#	if [[ $? == 1 ]]; then
+#		log "exec" "abuse ban chatid::${CHAT[ID]} userid::${USER[ID]}"
+#		kick_chat_member "${CHAT[ID]}" "${USER[ID]}"
+#		send_normal_message "${CHAT[ID]}" "\$ ban ${USER[USERNAME]}"
+#	fi
+#fi
 
 if [[ ${MESSAGE:0:1} == "$"  ]]; then
 	special_command
