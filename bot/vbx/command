@@ -352,7 +352,7 @@ function special_command_creator(){
 		'rmlog')
 			rm FILE_LOG
 			log "exec" "\$ rmlog chatid::${CHAT[ID]} userid::${USER[ID]}"
-			send_normal_message "${CHAT[ID]}" "$RP"
+			send_normal_message "${CHAT[ID]}" "\$ log delete"
 		;;
 	esac
 }
