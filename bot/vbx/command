@@ -76,10 +76,12 @@ function db_link_tblLink(){
 	if [[ $DB_RET == "" ]]; then
 		send_normal_message "${CHAT[ID]}" "\$ no data"
 	else
+		local DSP=""
 		while read -r line; do
 			line=$(echo "$line" | tr '#' '\n' | base64 -d)
-			send_normal_message "${CHAT[ID]}" "\$ $line"
+			DSP="$DSP:bookmark: $line\n"
 		done <<< "$DB_RET"
+		send_normal_message "${CHAT[ID]}" "$DSP"
 	fi
 }
 
@@ -90,10 +92,12 @@ function db_link_tblLink_group(){
 	if [[ $DB_RET == "" ]]; then
 		send_normal_message "${CHAT[ID]}" "\$ no data"
 	else
+		local DSP=""
 		while read -r line; do
 			line=$(echo "$line" | tr '#' '\n' | base64 -d)
-			send_normal_message "${CHAT[ID]}" "\$ $line"
+			DSP="$DSP:mag_right: $line\n"
 		done <<< "$DB_RET"
+		send_normal_message "${CHAT[ID]}" "$DSP"
 	fi
 }
 
@@ -105,10 +109,12 @@ function db_link_tblLink_name(){
 	if [[ $DB_RET == "" ]]; then
 		send_normal_message "${CHAT[ID]}" "\$ no data"
 	else
+		local DSP=""
 		while read -r line; do
 			line=$(echo "$line" | tr '#' '\n' | base64 -d)
-			send_normal_message "${CHAT[ID]}" "\$ $line"
+			DSP="$DSP:mag_right: $line\n"
 		done <<< "$DB_RET"
+		send_normal_message "${CHAT[ID]}" "$DSP"
 	fi
 }
 
