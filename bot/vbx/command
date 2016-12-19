@@ -79,7 +79,8 @@ function db_link_tblLink(){
 		local DSP=""
 		while read -r line; do
 			line=$(echo "$line" | tr '#' '\n' | base64 -d)
-			DSP="$DSP:bookmark: $line\n"
+			line=$(echo -e "\xF0\x9F\x94\x96 $line\n")
+			DSP="$DSP$line"
 		done <<< "$DB_RET"
 		send_markdown_message "${CHAT[ID]}" "$DSP"
 	fi
@@ -93,9 +94,11 @@ function db_link_tblLink_group(){
 		send_normal_message "${CHAT[ID]}" "\$ no data"
 	else
 		local DSP=""
+		local FRM=""
 		while read -r line; do
 			line=$(echo "$line" | tr '#' '\n' | base64 -d)
-			DSP="$DSP:mag_right: $line\n"
+			line=$(echo -e "\xF0\x9F\x94\x8E $line\n")
+			DSP="$DSP$line"
 		done <<< "$DB_RET"
 		send_markdown_message "${CHAT[ID]}" "$DSP"
 	fi
@@ -112,7 +115,8 @@ function db_link_tblLink_name(){
 		local DSP=""
 		while read -r line; do
 			line=$(echo "$line" | tr '#' '\n' | base64 -d)
-			DSP="$DSP:mag_right: $line\n"
+			line=$(echo -e "\xF0\x9F\x94\x8E $line\n")
+			DSP="$DSP$line"
 		done <<< "$DB_RET"
 		send_markdown_message "${CHAT[ID]}" "$DSP"
 	fi
