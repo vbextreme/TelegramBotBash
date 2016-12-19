@@ -81,7 +81,7 @@ function db_link_tblLink(){
 			line=$(echo "$line" | tr '#' '\n' | base64 -d)
 			DSP="$DSP:bookmark: $line\n"
 		done <<< "$DB_RET"
-		send_normal_message "${CHAT[ID]}" "$DSP"
+		send_markdown_message "${CHAT[ID]}" "$DSP"
 	fi
 }
 
@@ -97,7 +97,7 @@ function db_link_tblLink_group(){
 			line=$(echo "$line" | tr '#' '\n' | base64 -d)
 			DSP="$DSP:mag_right: $line\n"
 		done <<< "$DB_RET"
-		send_normal_message "${CHAT[ID]}" "$DSP"
+		send_markdown_message "${CHAT[ID]}" "$DSP"
 	fi
 }
 
@@ -114,7 +114,7 @@ function db_link_tblLink_name(){
 			line=$(echo "$line" | tr '#' '\n' | base64 -d)
 			DSP="$DSP:mag_right: $line\n"
 		done <<< "$DB_RET"
-		send_normal_message "${CHAT[ID]}" "$DSP"
+		send_markdown_message "${CHAT[ID]}" "$DSP"
 	fi
 }
 
