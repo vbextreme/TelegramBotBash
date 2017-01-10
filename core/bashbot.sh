@@ -471,7 +471,7 @@ while [ $SCRIPT_LOOP == "yes" ]; do {
 	OFFSET=$((OFFSET+1))
 	
 	if [ $OFFSET != 1 ]; then
-		if [[ $MAXT == 0 ]];
+		if [[ $MAXT == 0 ]]; then
 			PARSE_ASYNC="no"
 		else
 			PARSE_ASYNC=$OLD_ASYNC
