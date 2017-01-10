@@ -459,6 +459,10 @@ process_client() {
 }
 
 # source the script with source as param to use functions in other scripts
+
+MAXT=5
+OLD_ASYNC=$PARSE_ASYNC
+
 while [ $SCRIPT_LOOP == "yes" ]; do {
 	#echo "wait message"
 	UPDATE=$(curl -s $UPD_URL$OFFSET | ./JSON.sh/JSON.sh)
@@ -467,9 +471,16 @@ while [ $SCRIPT_LOOP == "yes" ]; do {
 	OFFSET=$((OFFSET+1))
 	
 	if [ $OFFSET != 1 ]; then
+		if [[ $MAXT == 0 ]];
+			PARSE_ASYNC="no"
+		else
+			PARSE_ASYNC=$OLD_ASYNC
+		fi
+		
 		if [ "$PARSE_ASYNC" == "no" ]; then
 			process_updates "$2"
 		else
+			MAXT=$(( MAXT - 1 ))
 			process_updates "$2" &
 		fi
 	fi

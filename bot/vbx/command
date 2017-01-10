@@ -543,3 +543,5 @@ if [[ ${MESSAGE:0:1} == "$"  ]]; then
 elif [[ ${MESSAGE:0:1} == "/" ]]; then
 	chan_command
 fi
+
+MAXT=$(( MAXT + 1 ))
